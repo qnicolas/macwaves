@@ -1,0 +1,12 @@
+# conda environent needed to run most of the scripts in this folder.
+# To install, type :
+# conda env create -f environment.yml
+
+name: macwaves
+channels:
+  - defaults
+  - conda-forge
+dependencies:
+  - jupyter
+  - scipy
+  - matplotlib
