@@ -13,8 +13,8 @@ import matplotlib.pyplot as plt
 m = 3                              # Angular order
 H = 140e3                          # Stratified layer thickness (m)
 B = 0.6 * 1.0e-3                   # Radial magnetic field (Tesla)
-Np = 0.5                           # dimensionless stratification Np = N/Omega
-T = 200.                           # Wave period initial estimate (years)
+Np = 0.583                           # dimensionless stratification Np = N/Omega
+T = -20.                           # Wave period initial estimate (years)
 
 sectoyear = 365.25 * 24 * 60 * 60
 omega0 = 2*np.pi/(T*sectoyear)     # Wave angular frequency initial estimate (rad.s-1)
@@ -28,7 +28,7 @@ Omega = 0.7292e-4;                 # Earth's rotation rate (s^-1)
 N = Np*Omega                       # Layer Brunt-Vaisala frequency (s^-1)
 k = np.pi/H                        # vertical wavenumber
 
-ngrid = 20                        # number of grid points in latitude (equator to pole)
+ngrid = 200                        # number of grid points in latitude (equator to pole)
 
 ##### DERIVED PARAMETERS #####
 # evaluate diffuion factor using estimate of omega
@@ -71,7 +71,7 @@ def modes_y(A,C0):
 
     # Return the frequency that is closest to the initial estimate
     omega = w[i]/Cp
-    return omega,v[i]
+    return omega,v[:,i]
 
 A=setA(ngrid,m,M)
 omega,bysec = modes_y(A,C0)
