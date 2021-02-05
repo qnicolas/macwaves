@@ -2,3 +2,6 @@ pWaves_fplane
 pWaves_initial
 .ipynb_checkpoints/
 .DS_Store
+data
+__pycache__/
+
