@@ -386,6 +386,20 @@ def scalar_ycomplex_fixedm(y,scalar,m):
 ###########################################
 ########   Unforced   Wave model   ########
 ###########################################
+from finitediff import get_weights
+def make_D_fornberg(y,m,npoints=5):
+    """Returns a differentiation matrix for the mth derivative on a nonuniform grid y, using a npoints-point stencil (uses Fornberg's algorithm)
+    """
+    N=len(y)
+    assert N>=npoints
+    D=np.zeros((N,N))
+    for i in range(npoints//2):
+        D[ i,:npoints] = get_weights(y[:npoints],y[i],-1,m)[:,m]
+        D[-i-1,-npoints:] = get_weights(y[-npoints:],y[-i-1],-1,m)[:,m] 
+    for i in range(npoints//2,N-npoints//2):
+        D[i,i-npoints//2:i+npoints//2+1] = get_weights(y[i-npoints//2:i+npoints//2+1],y[i],-1,m)[:,m]   
+    return D
+
 def secondDerivative(y):
     """Returns a triadiagonal matrix with diagonal elements -2/dy^2, and sup/subdiagonal elements 1/dy^2"""
     n = len(y)
@@ -405,19 +419,27 @@ def firstDerivative(y):
     
     return D1
 
-def sety(ngrid):
+def sety(ngrid,spacing):
     """Sets the grid (ngrid points between -1 and 1, without the boundaries)"""
-    return np.linspace(-1.,1.,ngrid+2)[1:-1] #exclude the -1 and 1 bounds to avoid divisions by 0
+    if spacing=='linear':
+        return np.linspace(-1.,1.,ngrid+2)[1:-1] #exclude the -1 and 1 bounds to avoid divisions by 0
+    elif spacing=='cos':
+        return np.cos(np.linspace(0.,np.pi,ngrid+2)[1:-1][::-1]) #exclude the -1 and 1 bounds to avoid divisions by 0
+    else:
+        raise ValueError("spacing must be one of ('linear','cos')")
 
-def setA(ngrid,m,M):
+def setyA(ngrid,m,M,spacing='linear'):
     """ Sets matrix A of the eigenvalue problem (A - C*In)x = 0"""
-    y  = sety(ngrid)
-    D2 = secondDerivative(y)
+    y  = sety(ngrid,spacing)
+    if spacing =='linear':
+        D2 = secondDerivative(y)
+    else:
+        D2 = make_D_fornberg(y,2,npoints=7)
     L1 = -np.dot(np.diag(M*(1-y**2)/(y**2)), D2) + np.diag(M*(m**2-1)/(y**2 * (1-y**2)))
 
     L2 = -np.diag(m/(y**2))
 
-    return np.block([[np.zeros((ngrid,ngrid)),np.eye(ngrid)],[L1,L2]])
+    return y,np.block([[np.zeros((ngrid,ngrid)),np.eye(ngrid)],[L1,L2]])
 
 def modesy(A,C):
     """Solves the linear eigenvalue problem (A - C*In)x = 0 and returns the corresponding b_theta''(y)"""
@@ -431,7 +453,7 @@ def modesy(A,C):
 ###########################################
 
 
-def responseForcing(y,A,C,m,M,G,Ftheta,Flambda,adaptchi=True,Cref=0,chiref=0):
+def responseForcing(ngrid,C,m,M,G,Ftheta,Flambda,adaptchi=True,Cref=0,chiref=0,spacing='linear'):
     ngrid=len(y)
     if adaptchi :
         if Cref == 0:
@@ -439,10 +461,13 @@ def responseForcing(y,A,C,m,M,G,Ftheta,Flambda,adaptchi=True,Cref=0,chiref=0):
         chinew = 1 + (chiref-1)*Cref/C
         M = M*chiref/chinew
         ngrid=len(y)
-        A=setA(ngrid,m,M)
+        A=setA(ngrid,m,M,spacing)
         A = sps.csc_matrix(A)
     
-    D1=firstDerivative(y)
+    if spacing =='linear':
+        D1 = firstDerivative(y)
+    else:
+        D1 = make_D_fornberg(y,1,npoints=5)
     
     forcingtheta = G*m**2/(M*(1-y**2)) * Ftheta
     forcinglambda = -1j* ( (C*G/M + 2*G/m)*y*Flambda 
@@ -452,14 +477,14 @@ def responseForcing(y,A,C,m,M,G,Ftheta,Flambda,adaptchi=True,Cref=0,chiref=0):
 
     return spsl.spsolve(A-C*sps.eye(2*ngrid),rhs)[:ngrid]/(1-y**2)
 
-def plotResponses(ax,ngrid,m,M,G,Ftheta,Flambda,desc,adaptchi=True,Cref=0,chiref=0,bounds=[-20,20]):
-    y = sety(ngrid)
-    A = sps.csc_matrix(setA(ngrid,m,M))
+def plotResponses(ax,ngrid,m,M,G,Ftheta,Flambda,desc,adaptchi=True,Cref=0,chiref=0,spacing='linear',bounds=[-20,20]):
+    y = sety(ngrid,spacing)
+    A = sps.csc_matrix(setA(ngrid,m,M,spacing))
     lbound,rbound=bounds
     Cs = np.linspace(lbound,rbound,1000)
     
     t=time.time()
-    responses = np.array([responseForcing(y,A,C,m,M,G,Ftheta,Flambda,adaptchi,Cref,chiref) for C in Cs])
+    responses = np.array([responseForcing(y,A,C,m,M,G,Ftheta,Flambda,adaptchi,Cref,chiref,spacing) for C in Cs])
     print(time.time()-t)
     
     #erase peaked response around frequency=0 if chi is adapted
