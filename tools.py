@@ -304,7 +304,7 @@ def torpol_to_thetaphi_ycomplex_fixedrlm(y,T,dSdr,r,l,m):
         Fphi_cos = 1/(r*sintheta) * m * dSdr * Plm
         Fphi_sin = -T/r * dPlmdtheta               
     
-    return Ftheta_cos-1j*Ftheta_sin, Fphi_cos-1j*Fphi_sin
+    return Ftheta_cos-1j*Ftheta_sin, Fphi_cos-1j*Fphi_sin  #Minus sign so that Real((Ftheta_cos-1j*Ftheta_sin)*e^{1j*m*phi} = Ftheta_cos*cos(m*phi)+Ftheta_sin*sin(m*phi))
 
 def torpol_to_thetaphi_ycomplex_fixedm(y,T,dSdr,m):
     ls = np.array(T.degree)
@@ -407,7 +407,7 @@ def secondDerivative(y):
     return (1/dy**2)*sps.diags([1, -2, 1], [-1, 0, 1], shape=(n,n)).toarray()
 
 def firstDerivative(y):
-    """Returns a differenciation matrix with second order accuracy :
+    """Returns a differentiation matrix with second order accuracy :
         - triadiagonal matrix with diagonal elements 0, and sup/subdiagonal elements +/- 1/(2*dy)
         - exception for the bounds where a second order one-sided scheme is used
     """
