@@ -1,10 +1,6 @@
 import numpy as np
-import scipy.sparse as sps
-import scipy.linalg as spl
-import scipy.sparse.linalg as spsl
 import pandas as pd
 import xarray as xr
-import time
 
 from pyshtools.legendre import PlmSchmidt_d1
 PlmSchmidt_d1_temp=np.vectorize(PlmSchmidt_d1,otypes=[np.ndarray],excluded=[0])
@@ -102,9 +98,9 @@ def torpol_to_rthetaphi_ygrid_fixedm(y,T,S,dSdr,m):
     else :
         Fr_cos = 0.*S
         Fr_sin = ls*(ls+1)/rs**2 * S * allplm  # shape = (nr,nTheta,nl)   
-        Ftheta_cos_ml0 = 1/(rs*sintheta) * m * T* allplm
-        Ftheta_sin_ml0 = 1/rs * dSdr * alldplmdtheta
-        Fphi_cos = 1/(rs*sintheta) * ml0 * dSdr * allplm
+        Ftheta_cos = 1/(rs*sintheta) * m * T* allplm
+        Ftheta_sin = 1/rs * dSdr * alldplmdtheta
+        Fphi_cos = 1/(rs*sintheta) * m * dSdr * allplm
         Fphi_sin = -1/rs * T * alldplmdtheta
         
     return Fr_cos.sum(axis=2)-1j*Fr_sin.sum(axis=2), Ftheta_cos.sum(axis=2)-1j*Ftheta_sin.sum(axis=2), Fphi_cos.sum(axis=2)-1j*Fphi_sin.sum(axis=2)
@@ -142,18 +138,18 @@ def interp_vector(y,vector,m):
        To recover the phi dependence, multiply the output by e^{i*m*phi}) and take the real part
     args :
         - y : numpy.ndarray, the y (=cos(latitude)) grid on which to compute the output
-        - vector : xr.Dataset, the two-dimensional (radius & spherical harmonic degree) vector variable with three components (toroidal, poloidal, d(poloidal)/dr.
+        - vector : xr.Dataset, the three-dimensional (time,radius & spherical harmonic degree) vector variable with three components (toroidal, poloidal, d(poloidal)/dr.
         - m : the spherical harmonic order of the data
     returns :
         - a xarray.Dataset, with dimensions time, radius and y. It contains six variables (real and imaginary parts of the r,theta and phi components).
     """
-    name = vector.variables[0][:-4]
+    name = list(vector.variables)[-3][:-4]
     
     vector_y_r_ar=[]
     vector_y_theta_ar=[]
     vector_y_phi_ar=[]
     for i in vector.t_step:
-        r,theta,phi=torpol_to_rthetaphi_ygrid_fixedm(y,vector[name+'_tor'].sel(t_step=i), vector[name+'_pol'].sel(t_step=i), vector[name+'_pol_dr'].sel(t_step=i).squeeze(), 3)
+        r,theta,phi=torpol_to_rthetaphi_ygrid_fixedm(y,vector[name+'_tor'].sel(t_step=i), vector[name+'_pol'].sel(t_step=i), vector[name+'_pol_dr'].sel(t_step=i).squeeze(), m)
         vector_y_r_ar.append(r)
         vector_y_theta_ar.append(theta)
         vector_y_phi_ar.append(phi)

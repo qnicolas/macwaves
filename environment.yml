@@ -8,5 +8,8 @@ channels:
   - conda-forge
 dependencies:
   - jupyter
+  - numpy
   - scipy
   - matplotlib
+  - finitediff
+  - pyshtools
