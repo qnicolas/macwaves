@@ -7,14 +7,14 @@ def ntsteps_to_years(n):
     """Convert a number of Calypso time steps to dimensional years"""
     L=2270e3
     pm=0.5
-    eta=0.8
+    eta=0.8 * 5.675 # to have realistic velocities, hence realistic time dependence
     return n*(L**2/eta/pm/86400/365.25 * 1e-7)
 
 def years_to_ntsteps(y):
     """Convert dimensional years to a number of Calypso time steps"""
     L=2270e3
     pm=0.5
-    eta=0.8
+    eta=0.8 * 5.675 # to have realistic velocities, hence realistic time dependence
     return y/(L**2/(eta*pm)/86400/365.25 * 1e-7)
 
 def nonzero_frequencies():
