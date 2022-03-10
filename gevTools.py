@@ -16,7 +16,7 @@ def solve_forced_problem_gev(y,A,B,C,rhs):
     B = sps.csc_matrix(B)
     return spsl.spsolve(A-C*B,rhs)[:ngrid]/(1-y**2)
 
-def solve_forced_problem_Nmodes_gev(y,A,zB,C,rhs,nmodes):
+def solve_forced_problem_Nmodes_gev(y,A,B,C,rhs,nmodes):
     ngrid=len(y)
     n0=0
     wi,zi,xi=spl.eig(A,B,left=True)

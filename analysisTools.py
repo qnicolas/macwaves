@@ -8,6 +8,7 @@ def ntsteps_to_years(n):
     L=2270e3
     pm=0.5
     eta=0.8 * 5.675 # to have realistic velocities, hence realistic time dependence
+    ## Equivalently, tstep diffusionless = tstep_calypso / E_calypso = 1e-7/1e-5 = 1e-2 and divide by Omega_adjusted = 4.4e-8.
     return n*(L**2/eta/pm/86400/365.25 * 1e-7)
 
 def years_to_ntsteps(y):
