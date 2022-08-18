@@ -23,9 +23,9 @@ def dat_to_xarray(file):
     coords = [cname for cname in df.columns if cname in all_coords]
     ds=df.set_index(coords).to_xarray()
     if 't_step' in coords:
-        ds = ds.assign_coords({'time':ds.time.isel({c:0 for c in coords if c != 't_step'}, drop=True)})
+        ds = ds.assign_coords({'time':ds.time.isel({c:-1 for c in coords if c != 't_step'}, drop=True)})
     if 'radius_ID' in coords:
-        ds = ds.assign_coords({'radius':ds.radius.isel({c:0 for c in coords if c != 'radius_ID'}, drop=True)})
+        ds = ds.assign_coords({'radius':ds.radius.isel({c:-1 for c in coords if c != 'radius_ID'}, drop=True)})
     return ds
 
 def scalar_ygrid_fixedm(y,scalar,m):
@@ -168,7 +168,7 @@ def interp_vector(y,vector,m):
                                 "t_step":vector.t_step,
                                 "radius_ID":vector.radius_ID,
                                 "y":y,
-                                "time":("t_step",vector.time),
-                                "radius":("radius_ID",vector.radius),
+                                "time":("t_step",vector.time.data),
+                                "radius":("radius_ID",vector.radius.data),
                             })
     return vector_y

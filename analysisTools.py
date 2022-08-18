@@ -2,33 +2,33 @@ import numpy as np
 import xarray as xr
 from scipy import interpolate
 from finitediff import get_weights
+sectoyear=365.25 * 24 * 60 * 60
+import time
 
-def ntsteps_to_years(n):
-    """Convert a number of Calypso time steps to dimensional years"""
-    L=2270e3
-    pm=0.5
-    eta=0.8 * 5.675 # to have realistic velocities, hence realistic time dependence
-    ## Equivalently, tstep diffusionless = tstep_calypso / E_calypso = 1e-7/1e-5 = 1e-2 and divide by Omega_adjusted = 4.4e-8.
-    return n*(L**2/eta/pm/86400/365.25 * 1e-7)
+def ntsteps_to_seconds(n):
+    """Convert a number of Calypso time steps to dimensional seconds"""
+    t_step = 1e-2 # tstep diffusionless = tstep_calypso / E_calypso = 1e-7/1e-5 = 1e-2
+    Omega_adjusted = 4.405286343612335e-08#4.4e-8
+    return n * t_step / Omega_adjusted
 
-def years_to_ntsteps(y):
-    """Convert dimensional years to a number of Calypso time steps"""
-    L=2270e3
-    pm=0.5
-    eta=0.8 * 5.675 # to have realistic velocities, hence realistic time dependence
-    return y/(L**2/(eta*pm)/86400/365.25 * 1e-7)
+def seconds_to_ntsteps(s):
+    """Convert dimensional seconds to a number of Calypso time steps"""
+    t_step = 1e-2 # tstep diffusionless = tstep_calypso / E_calypso = 1e-7/1e-5 = 1e-2
+    Omega_adjusted = 4.405286343612335e-08#4.4e-8
+    return s/(t_step / Omega_adjusted)
 
 def nonzero_frequencies():
-    """Get the nonzero frequencies of a Fourier transformed array (where the original array was on a time grid of 800 times with dt=25 Calypso time steps)"""
-    return np.fft.fftfreq(800,ntsteps_to_years(25))[1:]
+    """Get the nonzero frequencies (in s^-1) of a Fourier transformed array (where the original array was on a time grid of 800 times with dt=25 Calypso time steps)"""
+    freqs = np.fft.fftfreq(800,ntsteps_to_seconds(25))[1:]
+    return xr.DataArray(freqs,coords={'frequency':freqs},dims = ['frequency'],attrs={'unit':'s^-1'})
 
 def freqindex_to_period(idx):
-    """Goes from the index of a Fourier transformed array (where the original array was on a time grid of 800 times with dt=25 Calypso time steps) to a dimensional period in years """
-    return 1/nonzero_frequencies()[idx]
+    """Goes from the index of a Fourier transformed array (where the original array was on a time grid of 800 times with dt=25 Calypso time steps) to a dimensional period in seconds """
+    return 1/np.array(nonzero_frequencies())[idx]
 
 def period_to_freqindex(period):
-    """Goes from a dimensional period in years to the index of a Fourier transformed array (where the original array was on a time grid of 800 times with dt=25 Calypso time steps)"""
-    return np.argmin((1/nonzero_frequencies()-period)**2)
+    """Goes from a dimensional period in seconds to the index of a Fourier transformed array (where the original array was on a time grid of 800 times with dt=25 Calypso time steps)"""
+    return np.argmin((1/np.array(nonzero_frequencies())-period)**2)
 
 def put_at(inds, axis=-1, slc=(slice(None),)): 
     return (axis<0)*(Ellipsis,) + axis*slc + (inds,) + (-1-axis)*slc 
@@ -91,7 +91,6 @@ def transform_forcing(forcing,transformtype):
     returns :
         - numpy.ndarray, transformed forcing
     """
-    
     #Focus on stratified layer
     forcing_layer = forcing[:,np.where(forcing.radius>1.475)[0][0]:]
     
@@ -103,7 +102,7 @@ def transform_forcing(forcing,transformtype):
     
     #Here we subtract the affine part of the forcing, that doesn't contribute because what ultimately forces the wave is the second derivative (or third). This helps have smooth Fourier transforms in the subsequent decomposition
     forcing_layer_periodic = forcing_layer - forcing_layer.isel(radius_ID=-1) - (forcing_layer.radius-forcing_layer.radius[-1])*(forcing_layer.isel(radius_ID=0)-forcing_layer.isel(radius_ID=-1))/(forcing_layer.radius[0]-forcing_layer.radius[-1])
-    
+
     #Interpolate on constant r grid & perform the half range fft
     f = interpolate.interp1d(r_cheb, np.array(forcing_layer_periodic),axis=1)
     forcing_layer_rinterp = f(r_lin)
@@ -116,4 +115,16 @@ def transform_forcing(forcing,transformtype):
     
     # Perform temporal fft
     forcing_layer_hft_tft = np.fft.ifft(forcing_layer_hft,axis=0)[1:] #shape Nt,Nz,Ny #ifft because we define the temporal transform with a negative sign in the exponent; also excluded the zero frequency component
-    return forcing_layer_hft_tft
+
+    #convert to xarray
+    frequencies = nonzero_frequencies()
+    return xr.DataArray(forcing_layer_hft_tft,coords={'frequency':frequencies,'radial_order':np.arange(1,forcing_layer_hft_tft.shape[1]+1),'y':forcing_layer.y}, dims=['frequency','radial_order','y'],attrs=forcing.attrs)
+
+def split_NH_SH(forcing):
+    forcing_NH = forcing.sel(y=slice(0,1))
+    forcing_SH = forcing.sel(y=slice(-1,0))
+    forcing_SH = forcing_SH.reindex(y=forcing_SH.y[::-1])
+    forcing_SH.coords['y'] = forcing_NH.y
+    forcing_NH.coords['latitude'] = np.arcsin(forcing_NH.y)*180.0/np.pi
+    forcing_SH.coords['latitude'] = np.arcsin(forcing_SH.y)*180.0/np.pi
+    return forcing_NH,forcing_SH
