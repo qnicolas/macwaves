@@ -1,3 +1,4 @@
+# Description
 Code to solve for forced MAC waves in spherical geometry - Nicolas & Buffett (2023), GJI (accepted).
 
 This repo contains code to solve for forced MAC waves in spherical geometry - as in Nicolas, Q., & Buffett, B. A. (2023). Excitation of high-latitude MAC waves in Earth's core, GJI (accepted).
@@ -10,6 +11,8 @@ Finally, code to solve for forced MAC waves is mostly in forced_waves.py and mac
 
 Data is too large to be available on Github, but is available on request.
 
+# Running the code
 A .yml file is included that contains all necessary python packages to run the code and produce the figures. Create a conda environment using conda env create -f environment.yml, then activate with conda activate orogconv, launch a Jupyter notebook and you are hopefully all set!
 
+# Contact
 For any questions, contact qnicolas --at-- berkeley --dot-- edu
