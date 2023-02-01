@@ -1,4 +1,5 @@
-Code to solve for forced MAC waves in spherical geometry - Nicolas & Buffett (2023), GJI (accepted)
+Code to solve for forced MAC waves in spherical geometry - Nicolas & Buffett (2023), GJI (accepted).
+
 This repo contains code to solve for forced MAC waves in spherical geometry - as in Nicolas, Q., & Buffett, B. A. (2023). Excitation of high-latitude MAC waves in Earth's core, GJI (accepted).
 
 Preprocessing of output from the geodynamo model (i.e. converting from spherical harmonics & toroidal-poloidal representation to a spherical domain with r,theta,phi components) is illustrated in preprocessing.ipynb, using utilities in preprocessingTools.py.
