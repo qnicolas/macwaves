@@ -1,5 +1,14 @@
 .ipynb_checkpoints/
 .DS_Store
-data
 __pycache__/
 old
+chaosHovmollerPlot.ipynb
+chaosPlot.ipynb
+spectralDensity.ipynb
+uncertainties.ipynb
+figModel.ipynb
+
+figures_ntracked/
+chaosmagpy_package_0.11/
+data_ntracked/
+data/

@@ -155,8 +155,8 @@ def interp_scalar(y, scalar,m):
                                      "t_step":scalar.t_step,
                                      "radius_ID":scalar.radius_ID,
                                      "y":y,
-                                     "time":("t_step",scalar.time),
-                                     "radius":("radius_ID",scalar.radius),
+                                     "time":("t_step",scalar.time.data),
+                                     "radius":("radius_ID",scalar.radius.data),
                                  },
                                  dims=["t_step", "radius_ID","y"])
     scalar_y=xr.merge([np.real(scalar_y).rename("%s_real"%scalar.name),np.imag(scalar_y).rename("%s_imag"%scalar.name)])
