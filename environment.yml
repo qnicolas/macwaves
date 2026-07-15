@@ -4,7 +4,6 @@
 
 name: macwaves
 channels:
-  - defaults
   - conda-forge
 dependencies:
   - jupyter
@@ -13,3 +12,9 @@ dependencies:
   - matplotlib
   - finitediff
   - pyshtools
+  - pandas
+  - xarray
+  - netcdf4
+  - pip
+  - pip:
+    - finitediff
